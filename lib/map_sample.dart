@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
 
-class HomeScreen extends StatefulWidget {
-  static const String routeName='home';
+class MapSample extends StatefulWidget {
+  static const String routeName='map';
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<MapSample> createState() => _MapSampleState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _MapSampleState extends State<MapSample> {
 
   Location location=Location();
 
@@ -20,20 +20,44 @@ class _HomeScreenState extends State<HomeScreen> {
   bool serviceEnabled= false;
 
   late LocationData? locationData;
+
+  StreamSubscription<LocationData>? streamSubscription = null;
+
   final Completer<GoogleMapController> _controller =
   Completer<GoogleMapController>();
 
   static const CameraPosition _kGooglePlex = CameraPosition(
-    target: LatLng(37.42796133580664, -122.085749655962),
+    target: LatLng(31.2326654, 29.9458551),
     zoom: 14.4746,
   );
 
   static const CameraPosition _kLake = CameraPosition(
       bearing: 192.8334901395799,
-      target: LatLng(37.43296265331129, -122.08832357078792),
+      target: LatLng(31.2326654, 29.9458551),
       tilt: 59.440717697143555,
       zoom: 19.151926040649414);
+  Set<Marker> markers={};
+  double defLat=37.4219983;
+  double defLon=-122.084;
 
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    var usermarker = Marker(
+      markerId: MarkerId('user location'),
+      position: LatLng(31.2326654, 29.9458551),
+    );
+    markers.add(usermarker);
+
+  }
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    streamSubscription?.cancel();
+  }
   @override
   Widget build(BuildContext context) {
     getUserLocation();
@@ -44,6 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onMapCreated: (GoogleMapController controller) {
           _controller.complete(controller);
         },
+        markers: markers,
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _goToTheLake,
@@ -80,10 +105,14 @@ class _HomeScreenState extends State<HomeScreen> {
     if(gpsEnabled == false) return;
     if(gpsEnabled && permissinGranted){
       locationData= await location.getLocation();
-      location.onLocationChanged.listen((newLocationData) {  // tracking user location
-        locationData=newLocationData;
+      streamSubscription= location.onLocationChanged.listen((newLocationData) {  // tracking user location
+
+          locationData = newLocationData;
+
+
+        print('${newLocationData.latitude ?? 0} and ${newLocationData.longitude?? 0}'  );
+
       });
-      print('${locationData?.latitude ?? 0} and ${locationData?.longitude?? 0}'  );
     }
 
   }
